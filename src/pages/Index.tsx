@@ -4,7 +4,7 @@ import TetrisBoard from '../components/TetrisBoard';
 import GameControls from '../components/GameControls';
 import NextPiece from '../components/NextPiece';
 import GameStats from '../components/GameStats';
-import { useTetris } from '../hooks/useTetris';
+import { useTetris } from '../hooks';
 import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
