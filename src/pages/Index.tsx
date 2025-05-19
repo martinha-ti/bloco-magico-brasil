@@ -39,9 +39,9 @@ const Index = () => {
     }
   }, []);
 
-  // Verificar e atualizar high score
+  // Verificar e atualizar high score quando o jogo terminar
   useEffect(() => {
-    if (gameOver && score > highScore) {
+    if (gameOver && score > highScore && score > 0) {
       setHighScore(score);
       localStorage.setItem('tetrisHighScore', score.toString());
       toast({

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   BOARD_WIDTH, BOARD_HEIGHT, COLORS, GAME_SPEEDS, 
   KEY, POINTS, SHAPES 
@@ -16,7 +16,9 @@ type Tetromino = {
 };
 
 export const useTetris = () => {
-  const [board, setBoard] = useState<(string | null)[][]>(createEmptyBoard());
+  // Use a ref to prevent board updates triggering infinite loops
+  const boardRef = useRef<(string | null)[][]>(createEmptyBoard());
+  const [board, setBoard] = useState<(string | null)[][]>(boardRef.current);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [lines, setLines] = useState(0);
@@ -24,13 +26,13 @@ export const useTetris = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [tetromino, setTetromino] = useState<Tetromino>(randomTetromino());
   const [nextTetromino, setNextTetromino] = useState<Tetromino>(randomTetromino());
-  const [dropTime, setDropTime] = useState<null | number>(GAME_SPEEDS[0]);
+  const [dropTime, setDropTime] = useState<null | number>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [flashingRows, setFlashingRows] = useState<number[]>([]);
 
   // Atualiza o tabuleiro com a peça atual
   const updateBoard = useCallback(() => {
-    if (!tetromino) return;
+    if (!tetromino || !gameStarted) return;
 
     // Limpar o tabuleiro de peças móveis
     const newBoard = board.map(row => row.map(cell => 
@@ -71,12 +73,13 @@ export const useTetris = () => {
       });
     }
 
+    boardRef.current = newBoard;
     setBoard(newBoard);
-  }, [board, tetromino]);
+  }, [board, tetromino, gameStarted]);
 
   // Movimento para baixo
   const moveDown = useCallback(() => {
-    if (!tetromino || isPaused || gameOver) return;
+    if (!tetromino || isPaused || gameOver || !gameStarted) return;
     
     const newPosition = { ...tetromino.position, y: tetromino.position.y + 1 };
     if (!checkCollision(board, tetromino.shape, newPosition)) {
@@ -116,6 +119,7 @@ export const useTetris = () => {
         setLines(prev => prev + completedRows);
       }
 
+      boardRef.current = updatedBoard;
       setBoard(updatedBoard);
       
       // Game over se a colisão ocorrer perto do topo
@@ -129,29 +133,29 @@ export const useTetris = () => {
       setTetromino(nextTetromino);
       setNextTetromino(randomTetromino());
     }
-  }, [board, isPaused, level, nextTetromino, tetromino, gameOver]);
+  }, [board, isPaused, level, nextTetromino, tetromino, gameOver, gameStarted]);
 
   // Movimento para esquerda
   const moveLeft = useCallback(() => {
-    if (!tetromino || isPaused || gameOver) return;
+    if (!tetromino || isPaused || gameOver || !gameStarted) return;
     const newPosition = { ...tetromino.position, x: tetromino.position.x - 1 };
     if (!checkCollision(board, tetromino.shape, newPosition)) {
       setTetromino({ ...tetromino, position: newPosition });
     }
-  }, [board, isPaused, tetromino, gameOver]);
+  }, [board, isPaused, tetromino, gameOver, gameStarted]);
 
   // Movimento para direita
   const moveRight = useCallback(() => {
-    if (!tetromino || isPaused || gameOver) return;
+    if (!tetromino || isPaused || gameOver || !gameStarted) return;
     const newPosition = { ...tetromino.position, x: tetromino.position.x + 1 };
     if (!checkCollision(board, tetromino.shape, newPosition)) {
       setTetromino({ ...tetromino, position: newPosition });
     }
-  }, [board, isPaused, tetromino, gameOver]);
+  }, [board, isPaused, tetromino, gameOver, gameStarted]);
 
   // Rotação da peça
   const rotate = useCallback(() => {
-    if (!tetromino || isPaused || gameOver) return;
+    if (!tetromino || isPaused || gameOver || !gameStarted) return;
     
     const rotated = rotateMatrix(tetromino.shape);
     // Tentar rotação de acordo com a posição atual
@@ -197,11 +201,11 @@ export const useTetris = () => {
         return;
       }
     }
-  }, [board, isPaused, tetromino, gameOver]);
+  }, [board, isPaused, tetromino, gameOver, gameStarted]);
 
   // Drop rápido
   const hardDrop = useCallback(() => {
-    if (!tetromino || isPaused || gameOver) return;
+    if (!tetromino || isPaused || gameOver || !gameStarted) return;
     
     let newPosition = { ...tetromino.position };
     let dropDistance = 0;
@@ -216,17 +220,19 @@ export const useTetris = () => {
     
     // Forçar movimentação para baixo para fixar a peça
     setTimeout(moveDown, 10);
-  }, [board, isPaused, tetromino, moveDown, gameOver]);
+  }, [board, isPaused, tetromino, moveDown, gameOver, gameStarted]);
 
   // Pausa/despausar o jogo
-  const togglePause = () => {
+  const togglePause = useCallback(() => {
     if (!gameStarted) return;
     setIsPaused(!isPaused);
-  };
+  }, [gameStarted, isPaused]);
 
   // Reiniciar o jogo
-  const resetGame = () => {
-    setBoard(createEmptyBoard());
+  const resetGame = useCallback(() => {
+    const emptyBoard = createEmptyBoard();
+    boardRef.current = emptyBoard;
+    setBoard(emptyBoard);
     setScore(0);
     setLevel(1);
     setLines(0);
@@ -236,7 +242,8 @@ export const useTetris = () => {
     setNextTetromino(randomTetromino());
     setDropTime(GAME_SPEEDS[0]);
     setGameStarted(true);
-  };
+    setFlashingRows([]);
+  }, []);
 
   // Manipulador de teclas
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
@@ -268,7 +275,7 @@ export const useTetris = () => {
       default:
         break;
     }
-  }, [gameStarted, gameOver, isPaused, moveDown, moveLeft, moveRight, rotate, hardDrop]);
+  }, [gameStarted, gameOver, isPaused, moveDown, moveLeft, moveRight, rotate, hardDrop, togglePause]);
 
   // Efeito para configurar o manipulador de teclas
   useEffect(() => {
@@ -280,8 +287,10 @@ export const useTetris = () => {
 
   // Efeito para atualizar o tabuleiro
   useEffect(() => {
-    updateBoard();
-  }, [updateBoard]);
+    if (gameStarted && !isPaused && !gameOver) {
+      updateBoard();
+    }
+  }, [updateBoard, gameStarted, isPaused, gameOver]);
 
   // Efeito para atualizar o nível baseado na pontuação
   useEffect(() => {
@@ -296,13 +305,16 @@ export const useTetris = () => {
 
   // Efeito para drop automático
   useEffect(() => {
-    if (gameOver || isPaused || !dropTime) return;
+    let dropTimer: ReturnType<typeof setTimeout> | null = null;
     
-    const dropTimer = setTimeout(moveDown, dropTime);
+    if (!gameOver && !isPaused && gameStarted && dropTime) {
+      dropTimer = setTimeout(moveDown, dropTime);
+    }
+    
     return () => {
-      clearTimeout(dropTimer);
+      if (dropTimer) clearTimeout(dropTimer);
     };
-  }, [moveDown, dropTime, gameOver, isPaused]);
+  }, [moveDown, dropTime, gameOver, isPaused, gameStarted]);
 
   return {
     board,
