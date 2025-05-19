@@ -62,6 +62,7 @@ const GameControls: React.FC<GameControlsProps> = ({
           <li>↓ : Descer peça</li>
           <li>↑ : Rotacionar</li>
           <li>Espaço : Queda rápida</li>
+          <li>Enter : Iniciar jogo</li>
           <li>P : Pausar/Continuar</li>
         </ul>
       </div>

@@ -1,5 +1,5 @@
 
-import { BOARD_HEIGHT, BOARD_WIDTH, SHAPES } from '../constants/tetrisConstants';
+import { BOARD_HEIGHT, BOARD_WIDTH, SHAPES, COLORS } from '../constants/tetrisConstants';
 
 // Gera um tabuleiro vazio
 export const createEmptyBoard = () => {
@@ -53,10 +53,12 @@ export const checkCollision = (
 export const randomTetromino = () => {
   const shapes = Object.keys(SHAPES);
   const randShape = shapes[Math.floor(Math.random() * shapes.length)] as keyof typeof SHAPES;
+  
   return {
     shape: SHAPES[randShape],
     type: randShape,
     position: { x: BOARD_WIDTH / 2 - 1, y: 0 },
+    color: COLORS[randShape]
   };
 };
 

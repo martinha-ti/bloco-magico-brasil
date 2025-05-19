@@ -1,4 +1,3 @@
-
 // Cores para as peças de Tetris
 export const COLORS = {
   I: 'bg-cyan-500',
@@ -69,11 +68,12 @@ export const SHAPES = {
 
 // Teclas utilizadas no jogo
 export const KEY = {
-  LEFT: 'ArrowLeft',
-  RIGHT: 'ArrowRight',
-  DOWN: 'ArrowDown',
-  UP: 'ArrowUp',
-  SPACE: ' ',
-  P: 'p',
-  ESCAPE: 'Escape',
+  LEFT: "ArrowLeft",
+  RIGHT: "ArrowRight",
+  DOWN: "ArrowDown",
+  UP: "ArrowUp",
+  SPACE: " ",
+  P: "p",
+  ESCAPE: "Escape",
+  ENTER: "Enter"
 };

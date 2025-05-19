@@ -19,11 +19,18 @@ export const useKeyboardControls = (
     moveDown, 
     rotate, 
     hardDrop, 
-    togglePause 
+    togglePause,
+    resetGame 
   } = actions;
 
   // Manipulador de teclas
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    // Iniciar o jogo com Enter se ele não estiver iniciado
+    if ((event.key === KEY.ENTER || event.key === 'Enter') && (!gameStarted || gameOver)) {
+      resetGame();
+      return;
+    }
+    
     if (!gameStarted && !gameOver) return;
     
     if (event.key === KEY.P || event.key === KEY.ESCAPE) {
@@ -52,7 +59,7 @@ export const useKeyboardControls = (
       default:
         break;
     }
-  }, [gameStarted, gameOver, isPaused, moveDown, moveLeft, moveRight, rotate, hardDrop, togglePause]);
+  }, [gameStarted, gameOver, isPaused, moveDown, moveLeft, moveRight, rotate, hardDrop, togglePause, resetGame]);
 
   // Efeito para configurar o manipulador de teclas
   useEffect(() => {
